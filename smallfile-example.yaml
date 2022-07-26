@@ -1,0 +1,10 @@
+#storagesize: 2Gi
+#clients: 1
+samples: 1
+#operation: ["create", "read"]
+SmallfileParams:
+  top: "/var/tmp"
+  operation: "create"
+  threads: 5
+  file_size: 64
+  files: 100

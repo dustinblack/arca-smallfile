@@ -19,22 +19,25 @@ import re
 import sys
 import typing
 import tempfile
+import yaml
 import subprocess
+import dataclasses
 from dataclasses import dataclass
 from typing import List
 from wolkenwalze_plugin_sdk import plugin
+from git import Repo, Git
 
 
 @dataclass
 class SmallfileParams:
     """
-    These parameters will be passed through to the smallfile_cli.py command unchanged
+    The parameters in this schema will be passed through to the smallfile_cli.py command unchanged
     """
     top: str
     operation: str
     threads: int
-    file_size: int
     files: int
+    file_size: str = dataclasses.field(metadata={"id": "file-size"})
 
 
 @dataclass
@@ -44,6 +47,7 @@ class WorkloadParams:
     """
     samples: int
     SmallfileParams: SmallfileParams
+    SmallfileRelease: typing.Optional[str] = None
 
 
 @dataclass
@@ -62,6 +66,9 @@ class WorkloadError:
     """
     error: str
 
+
+
+smallfile_schema = plugin.build_object_schema(SmallfileParams)
 
 # The following is a decorator (starting with @). We add this in front of our function to define the metadata for our
 # step.
@@ -82,23 +89,31 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
     :return: the string identifying which output it is, as well the output structure
     """
 
-    smallfile_dir = "/home/dblack/git/smallfile"
+    smallfile_url = "https://github.com/distributed-system-analysis/smallfile.git"
+    smallfile_release = WorkloadParams.SmallfileRelease or "1.1"
+    smallfile_dir = tempfile.mkdtemp()
     smallfile_yaml = tempfile.mkstemp()
+    #TODO: Clean up tempdir/file
+
+    Repo.clone_from(smallfile_url, smallfile_dir)
+    g = Git(smallfile_dir)
+    g.checkout(smallfile_release)
 
     with open(smallfile_yaml[1], 'w') as file:
-        file.write(SmallfileParams)
+        file.write(yaml.dump(smallfile_schema.serialize(params.SmallfileParams)))
 
     smallfile_cmd = [
-        "./smallfile_cli.py",
+        "{}/smallfile_cli.py".format(smallfile_dir),
         "--yaml-input-file",
         smallfile_yaml[1],
     ]
 
     try:
-        subprocess.check_call(smallfile_cmd, text=True, cwd=smallfile_dir, stderr=subprocess.STDOUT)
-        return "stdout", WorkloadResults()
+        proc = subprocess.check_output(smallfile_cmd, text=True, cwd=smallfile_dir, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as error:
-        return "error", WorkloadError("smallfile_cli.py failed with return code %d" % error.returncode)
+        return "error", WorkloadError("smallfile_cli.py failed with return code {}".format(error.returncode))
+
+    return "success", WorkloadResults(proc)
 
 
     #return "error", WorkloadError(

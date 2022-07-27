@@ -27,7 +27,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from typing import List
-from wolkenwalze_plugin_sdk import plugin
+from arcaflow_plugin_sdk import plugin
 from git import Repo, Git
 
 
@@ -39,7 +39,7 @@ class SmallfileParams:
     top: str
     operation: str
     file_size: typing.Optional[str] = dataclasses.field(default=None, metadata={"id": "file-size"})
-    #FIXME: wolkenwalze throws an error when using typing.Optional with an int and the key is empty
+    #FIXME: arcaflow throws an error when using typing.Optional with an int and the key is empty
     threads: typing.Optional[int] = None
     files: typing.Optional[int] = None
     #TODO: Expand supported parameters and determine defaults/requirements

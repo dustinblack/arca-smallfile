@@ -1,5 +1,3 @@
-#storagesize: 2Gi
-#clients: 1
 samples: 1
 cleanup: True
 # Parameters in the below dictionary are passed through to the smallfile_cli.py command as-is. Please see the schema definition in the

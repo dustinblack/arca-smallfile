@@ -18,7 +18,7 @@ limitations under the License.
 import re
 import unittest
 import example_plugin
-from wolkenwalze_plugin_sdk import plugin
+from arcaflow_plugin_sdk import plugin
 
 
 class ExamplePluginTest(unittest.TestCase):

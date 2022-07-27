@@ -68,8 +68,12 @@ class WorkloadResults:
     rsptimes: str
     #WIP
     #timestamp:
-    #params:
-        #param:
+    #sf_params: typing.Dict[str, str]
+    host_set: str
+    top: str
+    operation: str
+    threads: int
+    file_size: int
     #results:
         #result:
         #how do we handle the variable nature of threads?
@@ -206,7 +210,7 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
     temp_cleanup(smallfile_out_file)
 
     print("==>> Workload run complete!")
-    return "success", WorkloadResults(smallfile_results,smallfile_rsptimes)
+    return "success", WorkloadResults(smallfile_results,smallfile_rsptimes,smallfile_json["params"]["host_set"],smallfile_json["params"]["top"],smallfile_json["params"]["operation"],smallfile_json["params"]["threads"],smallfile_json["params"]["file_size"])
 
 
 

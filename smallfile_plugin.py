@@ -50,12 +50,13 @@ class WorkloadParams:
     """
     This is the data structure for the input parameters of the step defined below.
     """
-    #FIXME: Enable boolean types
-    cleanup: str
     samples: int
     #TODO: Implement samples? Or do we do this outside of the plugin?
     SmallfileParams: SmallfileParams
     SmallfileRelease: typing.Optional[str] = None
+    #FIXME: Enable boolean type for cleanup
+    #https://github.com/arcalot/arcaflow-plugin-sdk-python/issues/2
+    cleanup: typing.Optional[str] = "True"
 
 
 @dataclass
@@ -186,7 +187,8 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
 
 
     # Cleanup after run, if enabled
-    if params.cleanup:
+    #if params.cleanup:
+    if params.cleanup == "True":
         print("==>> Cleaning up operation files ...")
         cleanup_yaml = smallfile_schema.serialize(params.SmallfileParams)
         cleanup_yaml["operation"] = "cleanup"

@@ -26,9 +26,11 @@ import dataclasses
 import fileinput
 import os
 import shutil
+import csv
 from dataclasses import dataclass
 from typing import List
 from arcaflow_plugin_sdk import plugin
+from arcaflow_plugin_sdk import schema
 from git import Repo, Git
 
 
@@ -43,6 +45,8 @@ class SmallfileParams:
     threads: typing.Optional[int] = None
     files: typing.Optional[int] = None
     #TODO: Expand supported parameters and determine defaults/requirements
+
+smallfile_schema = plugin.build_object_schema(SmallfileParams)
 
 
 @dataclass
@@ -60,24 +64,121 @@ class WorkloadParams:
 
 
 @dataclass
+class SmallfileOutputParams:
+    host_set: str
+    #launch_by_daemon: bool
+    launch_by_daemon: str
+    version: str
+    top: str
+    operation: str
+    files_per_thread: int
+    threads: int
+    file_size: int
+    file_size_distr: int
+    files_per_dir: int
+    share_dir: str
+    hash_to_dir: str
+    fsync_after_modify: str
+    pause_between_files: float
+    #pause_between_files: str
+    #auto_pause: bool
+    auto_pause: str
+    cleanup_delay_usec_per_file: int
+    finish_all_requests: str
+    stonewall: str
+    verify_read: str
+    xattr_size: int
+    xattr_count: int
+    permute_host_dirs: str
+    network_sync_dir: str
+    min_directories_per_sec: int
+    total_hosts: int
+    startup_timeout: int
+    host_timeout: int
+    fname_prefix: typing.Optional[str] = None
+    fname_suffix: typing.Optional[str] = None
+    
+output_params_schema = plugin.build_object_schema(SmallfileOutputParams)
+
+
+@dataclass
+class SmallfileOutputThread:
+    elapsed: float
+    #elapsed: str
+    files: int
+    records: int
+    filesPerSec: float
+    #filesPerSec: str
+    IOPS: float
+    #IOPS: str
+    MiBps: float
+    #MiBps: str
+    
+
+@dataclass
+class SmallfileOutputResults:
+    elapsed: float
+    #elapsed: str
+    files: int
+    records: int
+    filesPerSec: float
+    #filesPerSec: str
+    IOPS: float
+    #IOPS: str
+    MiBps: float
+    #MiBps: str
+    totalhreads: int
+    totalDataGB: float
+    #totalDataGB: str
+    pctFilesDone: float
+    #pctFilesDone: str
+    startTime: float
+    #startTime: str
+    status: str
+    #date: datetime
+    date: str
+    thread: typing.Dict[int, SmallfileOutputThread]
+
+output_results_schema = plugin.build_object_schema(SmallfileOutputResults)
+
+
+@dataclass
+class SmallfileOutputRsptimes:
+    #host_thread: str
+    #samples: int
+    #min: float
+    #max: float
+    #mean: float
+    #pctdev: float
+    #pctile50: float
+    #pctile90: float
+    #pctile95: float
+    #pctile99: float
+    host_thread: str
+    samples: str
+    min: str
+    max: str
+    mean: str
+    pctdev: str
+    pctile50: str
+    pctile90: str
+    pctile95: str
+    pctile99: str
+
+output_rsptimes_schema = schema.ListType(
+        plugin.build_object_schema(SmallfileOutputRsptimes)
+)
+
+
+@dataclass
 class WorkloadResults:
     """
     This is the output data structure for the success case.
     """
     #TODO
-    results: str
-    rsptimes: str
-    #WIP
-    #timestamp:
-    #sf_params: typing.Dict[str, str]
-    host_set: str
-    top: str
-    operation: str
-    threads: int
-    file_size: int
-    #results:
-        #result:
-        #how do we handle the variable nature of threads?
+    sf_params: SmallfileOutputParams
+    sf_results: SmallfileOutputResults
+    sf_rsptimes: typing.List[SmallfileOutputRsptimes]
 
 
 @dataclass
@@ -89,7 +190,6 @@ class WorkloadError:
 
 
 
-smallfile_schema = plugin.build_object_schema(SmallfileParams)
 
 # The following is a decorator (starting with @). We add this in front of our function to define the metadata for our step.
 @plugin.step(
@@ -177,13 +277,37 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
         temp_cleanup(smallfile_out_file, smallfile_dir)
         return "error", WorkloadError("{} failed with return code {}:\n{}".format(error.cmd[0],error.returncode,error.output))
 
-    with open("{}/stats-rsptimes.csv".format(rsptime_dir), 'r') as output:
-        smallfile_rsptimes = output.read()
+    rsptimes_schema_to_results_map = {
+        "host_thread": "host:thread",
+        "samples": " samples",
+        "min": " min",
+        "max": " max",
+        "mean": " mean",
+        "pctdev": " %dev",
+        "pctile50": " 50%ile",
+        "pctile90": " 90%ile",
+        "pctile95": " 95%ile",
+        "pctile99": " 99%ile"
+    }
 
-    #debug
-    #print(smallfile_rsptimes)
-    
-    #TODO: Convert response times into schema data
+    smallfile_rsptimes = []
+    with open("{}/stats-rsptimes.csv".format(rsptime_dir), newline='') as csvfile:
+        rsptimes_csv = csv.DictReader(csvfile)
+        for row in rsptimes_csv:
+            if not re.match("per-", row["host:thread"]) and not re.match("cluster-", row["host:thread"]) and not re.match("time-", row["host:thread"]):
+                schema_row = dict(rsptimes_schema_to_results_map)
+                for skey, svalue in schema_row.items():
+                    for key, value in row.items():
+                        if svalue == key:
+                            schema_row[skey] = str(value)
+                            #if skey == "host_thread":
+                            #    schema_row[skey] = str(value)
+                            #elif skey == "samples":
+                            #    schema_row[skey] = int(value)
+                            #else:
+                            #    schema_row[skey] = float(value)
+                            break
+                smallfile_rsptimes.append(schema_row)
 
 
     # Cleanup after run, if enabled
@@ -212,7 +336,7 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
     temp_cleanup(smallfile_out_file)
 
     print("==>> Workload run complete!")
-    return "success", WorkloadResults(smallfile_results,smallfile_rsptimes,smallfile_json["params"]["host_set"],smallfile_json["params"]["top"],smallfile_json["params"]["operation"],smallfile_json["params"]["threads"],smallfile_json["params"]["file_size"])
+    return "success", WorkloadResults(output_params_schema.unserialize(smallfile_json["params"]),output_results_schema.unserialize(smallfile_json["results"]),output_rsptimes_schema.unserialize(smallfile_rsptimes))
 
 
 

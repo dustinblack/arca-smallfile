@@ -43,16 +43,13 @@ class WorkloadParams:
     #TODO: Implement samples? Or do we do this outside of the plugin?
     SmallfileParams: SmallfileParams
     SmallfileRelease: typing.Optional[str] = None
-    #FIXME: Enable boolean type for cleanup
-    #https://github.com/arcalot/arcaflow-plugin-sdk-python/issues/2
-    cleanup: typing.Optional[str] = "True"
+    cleanup: typing.Optional[bool] = True
 
 
 @dataclass
 class SmallfileOutputParams:
     host_set: str
-    #launch_by_daemon: bool
-    launch_by_daemon: str
+    launch_by_daemon: bool
     version: str
     top: str
     operation: str
@@ -65,9 +62,7 @@ class SmallfileOutputParams:
     hash_to_dir: str
     fsync_after_modify: str
     pause_between_files: float
-    #pause_between_files: str
-    #auto_pause: bool
-    auto_pause: str
+    auto_pause: bool
     cleanup_delay_usec_per_file: int
     finish_all_requests: str
     stonewall: str
@@ -89,38 +84,29 @@ output_params_schema = plugin.build_object_schema(SmallfileOutputParams)
 @dataclass
 class SmallfileOutputThread:
     elapsed: float
-    #elapsed: str
     files: int
     records: int
     filesPerSec: float
-    #filesPerSec: str
     IOPS: float
-    #IOPS: str
     MiBps: float
-    #MiBps: str
     
 
 @dataclass
 class SmallfileOutputResults:
     elapsed: float
-    #elapsed: str
     files: int
     records: int
     filesPerSec: float
-    #filesPerSec: str
     IOPS: float
-    #IOPS: str
     MiBps: float
-    #MiBps: str
     totalhreads: int
     totalDataGB: float
-    #totalDataGB: str
     pctFilesDone: float
-    #pctFilesDone: str
     startTime: float
-    #startTime: str
     status: str
     #date: datetime
+    #FIXME: Enable datetime data type
+    # https://github.com/arcalot/arcaflow-plugin-sdk-python/issues/3
     date: str
     thread: typing.Dict[int, SmallfileOutputThread]
 
@@ -129,26 +115,16 @@ output_results_schema = plugin.build_object_schema(SmallfileOutputResults)
 
 @dataclass
 class SmallfileOutputRsptimes:
-    #host_thread: str
-    #samples: int
-    #min: float
-    #max: float
-    #mean: float
-    #pctdev: float
-    #pctile50: float
-    #pctile90: float
-    #pctile95: float
-    #pctile99: float
     host_thread: str
-    samples: str
-    min: str
-    max: str
-    mean: str
-    pctdev: str
-    pctile50: str
-    pctile90: str
-    pctile95: str
-    pctile99: str
+    samples: int
+    min: float
+    max: float
+    mean: float
+    pctdev: float
+    pctile50: float
+    pctile90: float
+    pctile95: float
+    pctile99: float
 
 output_rsptimes_schema = schema.ListType(
         plugin.build_object_schema(SmallfileOutputRsptimes)
@@ -297,8 +273,8 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
 
 
     # Cleanup after run, if enabled
-    #if params.cleanup:
-    if params.cleanup == "True":
+    if params.cleanup:
+    #if params.cleanup == "True":
         print("==>> Cleaning up operation files ...")
         cleanup_yaml = smallfile_schema.serialize(params.SmallfileParams)
         cleanup_yaml["operation"] = "cleanup"

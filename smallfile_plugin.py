@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import List
 from arcaflow_plugin_sdk import plugin
 from arcaflow_plugin_sdk import schema
-from git import Repo, Git
+#from git import Repo, Git
 
 
 @dataclass
@@ -195,17 +195,18 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
     :return: the string identifying which output it is, as well the output structure
     """
 
-    smallfile_url = "https://github.com/distributed-system-analysis/smallfile.git"
-    smallfile_release = params.SmallfileRelease or "1.1"
-    smallfile_dir = tempfile.mkdtemp()
+#    smallfile_url = "https://github.com/distributed-system-analysis/smallfile.git"
+#    smallfile_release = params.SmallfileRelease or "1.1"
+#    smallfile_dir = tempfile.mkdtemp()
+    smallfile_dir = "/plugin/smallfile"
     smallfile_yaml_file = tempfile.mkstemp()
     smallfile_out_file = tempfile.mkstemp()
 
-    # Clone the smallfile repo and checkout the correct release
-    print("==>> Getting smallfile release {} ...".format(smallfile_release))
-    Repo.clone_from(smallfile_url, smallfile_dir)
-    g = Git(smallfile_dir)
-    g.checkout(smallfile_release)
+#    # Clone the smallfile repo and checkout the correct release
+#    print("==>> Getting smallfile release {} ...".format(smallfile_release))
+#    Repo.clone_from(smallfile_url, smallfile_dir)
+#    g = Git(smallfile_dir)
+#    g.checkout(smallfile_release)
 
     # Copy all parameters from SmallfileParams directly for the smallfile CLI to use via YAML
     print("==>> Importing workload parameters ...")

@@ -26,7 +26,7 @@ class SmallfileParams:
     """
     top: str
     operation: str
-    file_size: typing.Optional[str] = dataclasses.field(default=None, metadata={"id": "file-size"})
+    file_size: typing.Optional[int] = dataclasses.field(default=None, metadata={"id": "file-size"})
     threads: typing.Optional[int] = None
     files: typing.Optional[int] = None
     #TODO: Expand supported parameters and determine defaults/requirements
@@ -270,6 +270,9 @@ def smallfile_run(params: WorkloadParams) -> typing.Tuple[str, typing.Union[Work
                             #    schema_row[skey] = float(value)
                             break
                 smallfile_rsptimes.append(schema_row)
+
+    #debug
+    #print(smallfile_rsptimes)
 
 
     # Cleanup after run, if enabled

@@ -1,4 +1,4 @@
-git+https://github.com/arcalot/arcaflow-plugin-sdk-python.git@main
+arcaflow-plugin-sdk
 #GitPython >= 3.1
 numpy
 scipy
